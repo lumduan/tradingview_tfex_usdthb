@@ -72,27 +72,55 @@ bool newYear  = year(time)  != year(time[1])  // True if the current bar is in a
 
 // Retrieve current equity and calculate bar profit/loss %
 float equity = strategy.equity
-float barProfitLoss = equity / equity[1] - 1 // Calculate the profit or loss for the current bar as a percentage change from the previous bar's equity
+
+// Calculate the profit or loss for the current bar as a percentage change from the previous bar's equity
+float profitLossPercent = equity / equity[1] - 1 
+float ProfitLoss = equity - equity[1]
+
+// Initialize variables for current month and year P&L %
+float currentMonthProfit = 0.0
+float currentYearProfit  = 0.0
 
 // Initialize variables for current month and year P&L %
 float currentMonthPnL = 0.0
 float currentYearPnL  = 0.0
 
-// Calculate current monthly P&L %
-currentMonthPnL := newMonth ? 0.0 : (1 + currentMonthPnL[1]) * (1 + barProfitLoss) - 1
+// Calculate current month Profit/Loss
+currentMonthProfit := newMonth ? 0.0 : currentMonthProfit[1] + ProfitLoss
+// Calculate current year Profit/Loss
+currentYearProfit := newYear ? 0.0 : currentYearProfit[1] + ProfitLoss
 
+
+// Calculate current monthly P&L %
+currentMonthPnL := newMonth ? 0.0 : (1 + currentMonthPnL[1]) * (1 + profitLossPercent) - 1
 // Calculate current yearly P&L %
-currentYearPnL := newYear ? 0.0 : (1 + currentYearPnL[1]) * (1 + barProfitLoss) - 1
+currentYearPnL := newYear ? 0.0 : (1 + currentYearPnL[1]) * (1 + profitLossPercent) - 1
 
 // Arrays to store Monthly and Yearly P&Ls
-var float[] monthlyPnLs = array.new_float(0) // Array to store monthly P&L values
-var int[] monthlyPnLsCount = array.new_int(0) // Array to store timestamps for monthly P&L
+var float[] monthlyProfit = array.new_float(0) // Array to store monthly P&L values
+var int[] monthlyProfitCount = array.new_int(0) // Array to store timestamps for monthly P&L
 
-var float[] yearlyPnLs = array.new_float(0) // Array to store yearly P&L values
-var int[] yearlyPnLsCount = array.new_int(0) // Array to store timestamps for yearly P&L
+var float[] yearlyProfit = array.new_float(0) // Array to store yearly P&L values
+var int[] yearlyProfitCount = array.new_int(0) // Array to store timestamps for yearly P&L
+
+// Arrays to store Monthly and Yearly P&Ls %
+var float[] monthlyPnLs = array.new_float(0) // Array to store monthly P&L% values
+var int[] monthlyPnLsCount = array.new_int(0) // Array to store timestamps for monthly P&L%
+
+var float[] yearlyPnLs = array.new_float(0) // Array to store yearly P&L% values
+var int[] yearlyPnLsCount = array.new_int(0) // Array to store timestamps for yearly P&L%
 
 // Track whether P&L computation was performed
 bool pnlComputed = false
+
+// Store monthly P&L when a new month starts or on the last bar
+if (not na(currentMonthProfit[1]) and (newMonth or barstate.islast))
+    if (pnlComputed[1])
+        array.pop(monthlyProfit) // Remove last value if already computed
+        array.pop(monthlyProfitCount)
+    
+    array.push(monthlyProfit, currentMonthProfit[1]) // Add current month P&L
+    array.push(monthlyProfitCount, time[1]) // Add corresponding timestamp
 
 // Store monthly P&L% when a new month starts or on the last bar
 if (not na(currentMonthPnL[1]) and (newMonth or barstate.islast))
@@ -104,6 +132,15 @@ if (not na(currentMonthPnL[1]) and (newMonth or barstate.islast))
     array.push(monthlyPnLsCount, time[1]) // Add corresponding timestamp
 
 // Store yearly P&L when a new year starts or on the last bar
+if (not na(currentYearProfit[1]) and (newYear or barstate.islast))
+    if (pnlComputed[1])
+        array.pop(yearlyProfit) // Remove last value if already computed
+        array.pop(yearlyProfitCount)
+    
+    array.push(yearlyProfit, currentYearProfit[1]) // Add current year P&L
+    array.push(yearlyProfitCount, time[1]) // Add corresponding timestamp
+
+// Store yearly P&L when a new year starts or on the last bar
 if (not na(currentYearPnL[1]) and (newYear or barstate.islast))
     if (pnlComputed[1])
         array.pop(yearlyPnLs) // Remove last value if already computed
@@ -112,51 +149,82 @@ if (not na(currentYearPnL[1]) and (newYear or barstate.islast))
     array.push(yearlyPnLs, currentYearPnL[1]) // Add current year P&L
     array.push(yearlyPnLsCount, time[1]) // Add corresponding timestamp
 
-// Calculate current yearly P&L as the sum of monthly P&Ls
-// if (newYear)
-//     currentYearPnL := 0.0 // Reset yearly P&L at the start of a new year
-//     for i = 0 to array.size(monthlyPnLs) - 1
-//         currentYearPnL := currentYearPnL + array.get(monthlyPnLs, i)
-// else
-//     currentYearPnL := currentYearPnL + barProfitLoss
 
-// Set to true on the last bar to indicate that P&L computation has been performed
+// Set to true on the last bar to indicate that P&L% computation has been performed
 pnlComputed := barstate.islast ? true : (pnlComputed[1] ? pnlComputed[1] : false)
 
-// Monthly P&L table
-var table monthlyPnLTable = table(na)
+// Profit/Loss table
+var table monthlyProfitTable = table(na)
+
+// P&L% table
+var table monthlyPercentTable = table(na)
 
 if show_table
 
+    // Create a table for profit/loss
     if (barstate.islast)
-        monthlyPnLTable := table.new(position = position.bottom_right, columns = 14, rows = array.size(yearlyPnLs) +1, border_width = 1)
-        table.cell(monthlyPnLTable, 0,  0, "Y|M",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 1,  0, "Jan",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 2,  0, "Feb",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 3,  0, "Mar",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 4,  0, "Apr",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 5,  0, "May",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 6,  0, "Jun",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 7,  0, "Jul",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 8,  0, "Aug",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 9,  0, "Sep",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 10, 0, "Oct",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 11, 0, "Nov",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 12, 0, "Dec",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPnLTable, 13, 0, "Year", text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        monthlyProfitTable := table.new(position = position.top_right, columns = 14, rows = array.size(yearlyProfit) +1, border_width = 1)
+        table.cell(monthlyProfitTable, 0,  0, "Y|M",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 1,  0, "Jan",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 2,  0, "Feb",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 3,  0, "Mar",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 4,  0, "Apr",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 5,  0, "May",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 6,  0, "Jun",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 7,  0, "Jul",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 8,  0, "Aug",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 9,  0, "Sep",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 10, 0, "Oct",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 11, 0, "Nov",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 12, 0, "Dec",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyProfitTable, 13, 0, "Year", text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+
+        // Create a row for each year
+        for yearIndex = 0 to array.size(yearlyProfit) - 1
+            // Create year index cell
+            table.cell(monthlyProfitTable, 0, yearIndex + 1, str.tostring(year(array.get(yearlyProfitCount, yearIndex))), text_color = color.white, bgcolor = TABLE_CELL_COLOR)
+
+            // Create Year  P&L cells
+            yearColor = array.get(yearlyProfit, yearIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
+            table.cell(monthlyProfitTable, 13, yearIndex + 1, str.format("{0,number,integer}", math.round(number = array.get(yearlyProfit, yearIndex), precision = prec)), text_color = color.white, bgcolor = yearColor)
+        
+        for monthIndex = 0 to array.size(monthlyProfit) - 1
+            monthRow = year(array.get(monthlyProfitCount, monthIndex)) - year(array.get(yearlyProfitCount, 0)) + 1
+            monthColumn = month(array.get(monthlyProfitCount, monthIndex))
+            monthColor = array.get(monthlyProfit, monthIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
+            table.cell(monthlyProfitTable, monthColumn, monthRow, str.format("{0,number,integer}", math.round(number = array.get(monthlyProfit, monthIndex), precision = prec)), text_color = color.white, bgcolor = monthColor)
+
+
+    // Create a table for profit/loss %
+    if (barstate.islast)
+        monthlyPercentTable := table.new(position = position.bottom_right, columns = 14, rows = array.size(yearlyPnLs) +1, border_width = 1)
+        table.cell(monthlyPercentTable, 0,  0, "Y|M",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 1,  0, "Jan",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 2,  0, "Feb",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 3,  0, "Mar",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 4,  0, "Apr",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 5,  0, "May",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 6,  0, "Jun",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 7,  0, "Jul",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 8,  0, "Aug",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 9,  0, "Sep",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 10, 0, "Oct",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 11, 0, "Nov",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 12, 0, "Dec",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
+        table.cell(monthlyPercentTable, 13, 0, "Year", text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
 
         // Create a row for each year
         for yearIndex = 0 to array.size(yearlyPnLs) - 1
             // Create year index cell
-            table.cell(monthlyPnLTable, 0, yearIndex + 1, str.tostring(year(array.get(yearlyPnLsCount, yearIndex))), text_color = color.white, bgcolor = TABLE_CELL_COLOR)
+            table.cell(monthlyPercentTable, 0, yearIndex + 1, str.tostring(year(array.get(yearlyPnLsCount, yearIndex))), text_color = color.white, bgcolor = TABLE_CELL_COLOR)
 
             // Create Year  P&L cells
             yearColor = array.get(yearlyPnLs, yearIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
-            table.cell(monthlyPnLTable, 13, yearIndex + 1, str.tostring(math.round(number = array.get(yearlyPnLs,yearIndex)*100, precision = prec)) + " %", text_color = color.white, bgcolor = yearColor)
+            table.cell(monthlyPercentTable, 13, yearIndex + 1, str.tostring(math.round(number = array.get(yearlyPnLs,yearIndex)*100, precision = prec)) + " %", text_color = color.white, bgcolor = yearColor)
         
         // Create a row and col for each month
         for monthIndex = 0 to array.size(monthlyPnLs) - 1
             monthRow = year(array.get(monthlyPnLsCount, monthIndex)) - year(array.get(yearlyPnLsCount, 0)) + 1
             monthColumn = month(array.get(monthlyPnLsCount, monthIndex))
             monthColor = array.get(monthlyPnLs, monthIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
-            table.cell(monthlyPnLTable, monthColumn, monthRow, str.tostring(math.round(number = array.get(monthlyPnLs, monthIndex)*100, precision = prec)) + " %", text_color = color.white, bgcolor = monthColor)
+            table.cell(monthlyPercentTable, monthColumn, monthRow, str.tostring(math.round(number = array.get(monthlyPnLs, monthIndex)*100, precision = prec)) + " %", text_color = color.white, bgcolor = monthColor)

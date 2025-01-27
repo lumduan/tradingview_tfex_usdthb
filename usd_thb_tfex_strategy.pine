@@ -1,6 +1,7 @@
 // This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © lumduan
 //@version=6
+// For USDTHB TFEX Strategy Timeframe 60 minutes
 
 // ————— Constants
 float RISK_FREE_RATE = 2.2 // Risk-free rate for calculating Sharpe ratio
@@ -21,11 +22,11 @@ int CONTACT_PER_ORDER = 10
 float COMMISSION_PRICE = 9.0 //THB
 
 // Inputs for configuring the pivot point calculation
-int leftBars  = input(2) // Number of bars to the left for pivot calculation
-int rightBars = input(1) // Number of bars to the right for pivot calculation
+int leftBars  = input(7) // Number of bars to the left for pivot calculation
+int rightBars = input(2) // Number of bars to the right for pivot calculation
 
 int prec      = input(2, title = "Return Precision") // Precision of return percentages
-bool show_table = input.bool(defval = true, title = "On/Off") // Show or hide the table
+bool show_table = input.bool(defval = true, title = "Show Return Rate Table On/Off") // Show or hide the table
 
 
 strategy(title = "USDTHB TFEX Strategy",overlay = true, calc_on_every_tick = true, default_qty_type = strategy.fixed, default_qty_value = CONTACT_PER_ORDER, commission_type = strategy.commission.cash_per_contract, commission_value = COMMISSION_PRICE , risk_free_rate = RISK_FREE_RATE)

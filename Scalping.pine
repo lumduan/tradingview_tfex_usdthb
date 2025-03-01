@@ -1,0 +1,55 @@
+//@version=5
+strategy("S50 TFEX Scalping Strategy", overlay=true)
+
+// Define the indicators
+ema9 = ta.ema(close, 9)
+ema21 = ta.ema(close, 21)
+rsi7 = ta.rsi(close, 7)
+vwap = ta.vwap(close)
+atr = ta.atr(14)
+
+// Define the entry conditions
+// longCondition = ta.crossover(close, ema9) and rsi7 < 30
+// shortCondition = ta.crossunder(close, ema9) and rsi7 > 70
+longCondition = ta.crossover(ema9,ema21) and ta.crossover(close,vwap)
+shortCondition = ta.crossunder(ema9,ema21) and ta.crossunder(close,vwap)
+
+// // Define the exit conditions
+// Option 1: Exit when price touches ATR target (1.5x ATR from entry price)
+longExitCondition = close >= strategy.position_avg_price + 1.5 * atr
+shortExitCondition = close <= strategy.position_avg_price - 1.5 * atr
+
+// Option 2: Exit when price shows MACD divergence (MACD weakens while price makes new highs/lows)
+[macdLine, signalLine, _] = ta.macd(close, 12, 26, 9)
+macdDivergenceLong = ta.crossover(macdLine, signalLine) and ta.highest(close, 5) > ta.highest(close[1], 5)
+macdDivergenceShort = ta.crossunder(macdLine, signalLine) and ta.lowest(close, 5) < ta.lowest(close[1], 5)
+longExitCondition := longExitCondition or macdDivergenceLong
+shortExitCondition := shortExitCondition or macdDivergenceShort
+
+// Option 3: If using a trailing stop, move SL to breakeven when price reaches 1x ATR profit
+trailStopLong = close >= strategy.position_avg_price + atr
+trailStopShort = close <= strategy.position_avg_price - atr
+if trailStopLong
+    strategy.exit("Long", "Long", stop=strategy.position_avg_price)
+if trailStopShort
+    strategy.exit("Short", "Short", stop=strategy.position_avg_price)
+
+
+// Execute the trades
+if (longCondition)
+    strategy.entry(id = "Long", direction = strategy.long, comment = "Open Long")
+if (shortCondition)
+    strategy.entry(id = "Short", direction = strategy.short, comment = "Open Short")
+
+if (longExitCondition)
+    strategy.close(id = "Long", comment = "Close Long")
+if (shortExitCondition)
+    strategy.close(id = "Short", comment = "Close Short")
+
+// Plot the indicators
+plot(ema9, color=color.blue, title="EMA 9")
+plot(ema21, color=color.red, title="EMA 21")
+// plot(vwap, color=color.green, title="VWAP")
+// hline(30, "RSI Oversold", color=color.red)
+// hline(70, "RSI Overbought", color=color.green)
+// plot(rsi7, color=color.purple, title="RSI 7")

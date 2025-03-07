@@ -52,25 +52,25 @@ in_table_pos = input.string(title="ตำแหน่งตาราง", defval
                  options=["Top Right" , "Middle Right" , "Bottom Right" , 
                           "Top Center", "Middle Center", "Bottom Center", 
                           "Top Left"  , "Middle Left"  , "Bottom Left" ], 
-                          group= "Table Setting", inline="0")
+                          group= "ตั้งค่าตาราง", inline="0")
     
 // Table Size
 in_table_size = input.string(title="ขนาดตาราง", defval="Small", 
                  options=["Auto",  "Huge",  "Large", "Normal", "Small", "Tiny"], 
-                         group= "Table Setting", inline="0")
+                         group= "ตั้งค่าตาราง", inline="0")
 
 // Table Color
-tBgCol = input.color(#525252,     title="สีหัวข้อ",  group = "Table Setting" , inline="1")
-cBgCol = input.color(#7c7c7c,     title="สีพื้นหลังตาราง", group = "Table Setting" , inline="1")
-txtCol = input.color(color.white, title="สีตัวอักษร",  group = "Table Setting" , inline="1")
+tBgCol = input.color(#525252,     title="สีหัวข้อ",  group = "ตั้งค่าตาราง" , inline="1")
+cBgCol = input.color(#7c7c7c,     title="สีพื้นหลังตาราง", group = "ตั้งค่าตาราง" , inline="1")
+txtCol = input.color(color.white, title="สีตัวอักษร",  group = "ตั้งค่าตาราง" , inline="1")
 
-UpCol  = input.color(color.green,  title="สีค่าตัวเลขบวก",   group = "Table Setting" , inline="2")
-DnCol  = input.color(color.red,    title="สีค่าตัวเลขลบ", group = "Table Setting" , inline="2")
+UpCol  = input.color(color.green,  title="สีค่าตัวเลขบวก",   group = "ตั้งค่าตาราง" , inline="2")
+DnCol  = input.color(color.red,    title="สีค่าตัวเลขลบ", group = "ตั้งค่าตาราง" , inline="2")
 
 // Show / Hide
-showRS = input.bool(true, title = "ตารางรายละเอียด",         group = "Table Setting")
-showPP = input.bool(true, title = "ตารางความเสี่ยงและผลตอบแทน", group = "Table Setting")
-showPI = input.bool(true, title = "ตารางผลตอบแทนของพอร์ต",  group = "Table Setting")
+showRS = input.bool(true, title = "ตารางรายละเอียด",         group = "ตั้งค่าตาราง")
+showPP = input.bool(true, title = "ตารางความเสี่ยงและผลตอบแทน", group = "ตั้งค่าตาราง")
+showPI = input.bool(true, title = "ตารางผลตอบแทนของพอร์ต",  group = "ตั้งค่าตาราง")
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++ {Plot}
 // Plot Position
@@ -78,86 +78,86 @@ in_plot_pos = input.string(title="ตำแหน่งวางกราฟ", d
                  options=["Top Right" , "Middle Right" , "Bottom Right" , 
                           "Top Center", "Middle Center", "Bottom Center", 
                           "Top Left"  , "Middle Left"  , "Bottom Left" ], 
-                          group= "Plot Setting", inline="0")
+                          group= "ตั้งค่ากราฟ", inline="0")
 
 // Plot Color
-pltCol  = input.color(color.gray,  title=" ",   group = "Plot Setting" , inline="0")
+pltCol  = input.color(color.gray,  title=" ",   group = "ตั้งค่ากราฟ" , inline="0")
 
-bnchCol = input.color(color.rgb(207, 139, 29), title="ค่าอ้างอิง (Benchmark) ",   group = "Plot Setting", inline="1")
-prtfCol = input.color(color.rgb(0, 88, 220),  title=" Portfolio ",  group = "Plot Setting", inline="1")
+bnchCol = input.color(color.rgb(207, 139, 29), title="ค่าอ้างอิง (Benchmark) ",   group = "ตั้งค่ากราฟ", inline="1")
+prtfCol = input.color(color.rgb(0, 88, 220),  title=" Portfolio ",  group = "ตั้งค่ากราฟ", inline="1")
 
 // Bar Size
-barHigh = input.float(0.8, "ความสูงกราฟ", minval = 0.2, step= 0.01, group = "Plot Setting")
-barWdth = input.float(1.0, "ความกว้างกราฟ" , minval = 1,   step= 0.01, group = "Plot Setting")
+barHigh = input.float(0.8, "ความสูงกราฟ", minval = 0.2, step= 0.01, group = "ตั้งค่ากราฟ")
+barWdth = input.float(1.0, "ความกว้างกราฟ" , minval = 1,   step= 0.01, group = "ตั้งค่ากราฟ")
 
 // Report Period
 period  = input.string(title="แบ่งช่วงเวลาแบบ", defval="ไตรมาส", 
-             options=["สัปดาห์",  "เดือน",  "ไตรมาส", "ปี"],   group = "Plot Setting")
+             options=["สัปดาห์",  "เดือน",  "ไตรมาส", "ปี"],   group = "ตั้งค่ากราฟ")
 
 
-showPB  = input.bool(true, title = "กราฟของผลตอบแทนเทียบกับค่าอ้างอิง", group = "Plot Setting")
+showPB  = input.bool(true, title = "กราฟของผลตอบแทนเทียบกับค่าอ้างอิง", group = "ตั้งค่ากราฟ")
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++ {Performance}
-sTime   =  input.time(timestamp("02 JAN 2020"), "วันที่ เริ่ม", group = "Performance Setting")
-eTime   =  input.time(timestamp("01 DEC 2050"), "วันที่ สิ้นสุด", group = "Performance Setting")
+sTime   =  input.time(timestamp("02 JAN 2020"), "วันที่ เริ่ม", group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
+eTime   =  input.time(timestamp("01 DEC 2050"), "วันที่ สิ้นสุด", group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 
 // Capital
-cptl    = input.float(100000, "เงินลงทุนเริ่มต้น (Initial Capital)", minval = 0,  group = "Performance Setting")
+cptl    = input.float(100000, "เงินลงทุนเริ่มต้น (Initial Capital)", minval = 0,  group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 
 // Benchmark
-s00     = input.symbol("SET", title = "ค่ามาตรฐานอ้างอิง (Benchmark)",     group = "Performance Setting")
+s00     = input.symbol("SET", title = "ค่ามาตรฐานอ้างอิง (Benchmark)",     group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 
 // Rebalancing 
-reblMrk = input.bool(false, title = "ปรับสมดุลพอร์ตทุก (Rebalance)", inline = "1", group = "Performance Setting")
+reblMrk = input.bool(false, title = "ปรับสมดุลพอร์ตทุก (Rebalance)", inline = "1", group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 rebl    = input.string("ไตรมาส", title= "",  options=["เดือน",  "ไตรมาส", "ปี"], 
-                                                   inline = "1", group = "Performance Setting")
+                                                   inline = "1", group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 
 // Adjust Price
-adjst   = input.bool(true, title = "รวมเงินปันผล (Adjust Stock Price for Dividends)", group = "Performance Setting")
+adjst   = input.bool(true, title = "รวมเงินปันผล (Adjust Stock Price for Dividends)", group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 
 // Risk Free
-riskFree = input.symbol("TH10Y", title = "ผลตอบแทนปราศจากความเสี่ยง (Risk Free)", group = "Performance Setting")
+riskFree = input.symbol("TH10Y", title = "ผลตอบแทนปราศจากความเสี่ยง (Risk Free)", group = "ตั้งค่าเงินลงทุน วันเริ่ม/จบ การปรับพอร์ต")
 
 // |++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++|
 // |                                  SYMBOLS                                   |
 // |++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++|
 //  Symbols Checkmark
-u01 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s01")
-u02 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s02")
-u03 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s03")
-u04 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s04")
-u05 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s05")
-u06 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s06")
-u07 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s07")
-u08 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s08")
-u09 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s09")
-u10 = input.bool(true,  title = "", group = "Portfolio Stock Weighting", inline = "s10")
+u01 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s01")
+u02 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s02")
+u03 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s03")
+u04 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s04")
+u05 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s05")
+u06 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s06")
+u07 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s07")
+u08 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s08")
+u09 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s09")
+u10 = input.bool(true,  title = "", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s10")
 
 
 // Symbols Weight
-w01 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s01")
-w02 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s02")
-w03 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s03")
-w04 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s04")
-w05 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s05")
-w06 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s06")
-w07 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s07")
-w08 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s08")
-w09 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s09")
-w10 = input.float(10, title = "", minval = 0, group = "Portfolio Stock Weighting", inline = "s10")
+w01 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s01")
+w02 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s02")
+w03 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s03")
+w04 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s04")
+w05 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s05")
+w06 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s06")
+w07 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s07")
+w08 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s08")
+w09 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s09")
+w10 = input.float(10, title = "", minval = 0, group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s10")
 
 
 // Symbols 
-s01 = input.symbol("SET:PTT", title = "% ", group = "Portfolio Stock Weighting", inline = "s01")
-s02 = input.symbol("SET:ADVANC", title = "% ", group = "Portfolio Stock Weighting", inline = "s02")
-s03 = input.symbol("SET:AOT", title = "% ", group = "Portfolio Stock Weighting", inline = "s03")
-s04 = input.symbol("SET:GULF", title = "% ", group = "Portfolio Stock Weighting", inline = "s04")
-s05 = input.symbol("SET:CPALL", title = "% ", group = "Portfolio Stock Weighting", inline = "s05")
-s06 = input.symbol("SET:SCB", title = "% ", group = "Portfolio Stock Weighting", inline = "s06")
-s07 = input.symbol("SET:MINT", title = "% ", group = "Portfolio Stock Weighting", inline = "s07")
-s08 = input.symbol("SET:BDMS", title = "% ", group = "Portfolio Stock Weighting", inline = "s08")
-s09 = input.symbol("SET:CPN",  title = "% ", group = "Portfolio Stock Weighting", inline = "s09")
-s10 = input.symbol("SET:SCC",  title = "% ", group = "Portfolio Stock Weighting", inline = "s10")
+s01 = input.symbol("SET:PTT", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s01")
+s02 = input.symbol("SET:ADVANC", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s02")
+s03 = input.symbol("SET:AOT", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s03")
+s04 = input.symbol("SET:GULF", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s04")
+s05 = input.symbol("SET:CPALL", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s05")
+s06 = input.symbol("SET:SCB", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s06")
+s07 = input.symbol("SET:MINT", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s07")
+s08 = input.symbol("SET:BDMS", title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s08")
+s09 = input.symbol("SET:CPN",  title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s09")
+s10 = input.symbol("SET:SCC",  title = "% ", group = "เลือกสินทรัพย์ และสัดส่วนในพอร์ต", inline = "s10")
 
 // Get Symbols ID
 only_symbol(s) => 
@@ -381,7 +381,8 @@ matrix.set(performance_mtx, 4, 2, str.tostring(volBnch * 100, "#.##") + "%")    
 // [5] Sharpe Ratio
 returnGrowth(equity) =>
     // Number of Years since Starting Calculation
-    nY = (time - iTime) / 31536000000
+    int millisecondsInYear = 31536000000
+    nY = (time - iTime) / millisecondsInYear
     
     math.pow(equity/cptl, 1/nY) - 1
     

@@ -317,7 +317,7 @@ var financial_data_array_02     = array.new_float(  data_size_selection)  // EPS
 
 if reference_revenue
     create_array(date_array,                time)
-    create_array(financial_data_array,      financial_data_01)
+    (financial_data_array,      financial_data_01)
     create_array(financial_data_array_02,   financial_data_02)
 
 // 5. TABLE ================================================================================

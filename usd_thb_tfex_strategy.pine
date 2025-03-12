@@ -1,7 +1,9 @@
 // This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © lumduan
 //@version=6
-// For USDTHB TFEX Strategy Timeframe 60 minutes
+
+// For USDTHB TFEX Strategy Timeframe 30 minutes
+
 
 // ————— Constants
 float RISK_FREE_RATE = 2.2 // Risk-free rate for calculating Sharpe ratio
@@ -9,6 +11,7 @@ HIGH_PRICE_BAR_COLOR = color.green
 LOW_PRICE_BAR_COLOR = color.red
 int HIGH_PRICE_BAR_WIDTH = 1
 int LOW_PRICE_BAR_WIDTH = 1
+int prec      = 2 // Precision of return percentages
 
 TABLE_HEADER_COLOR = color.new(color.black, 0)
 TABLE_INDEX_COLOR = color.new(color.gray, 0)
@@ -18,14 +21,13 @@ TABLE_YEAR_CELL_NEGATIVE_COLOR = color.new(color.red, 0)
 
 
 
-int CONTACT_PER_ORDER = 10 
-float COMMISSION_PRICE = 9.0 //THB
+int CONTACT_PER_ORDER = 20 
+float COMMISSION_PRICE = 10.1 //THB
 
 // Inputs for configuring the pivot point calculation
-int leftBars  = input(7) // Number of bars to the left for pivot calculation
-int rightBars = input(2) // Number of bars to the right for pivot calculation
+int leftBars  = input(82) // Number of bars to the left for pivot calculation
+int rightBars = input(1) // Number of bars to the right for pivot calculation
 
-int prec      = input(2, title = "Return Precision") // Precision of return percentages
 bool show_table = input.bool(defval = true, title = "Show Return Rate Table On/Off") // Show or hide the table
 
 
@@ -54,7 +56,6 @@ shortEntry := not na(swingLow) ? true : (shortEntry[1] and low < lowPrice ? fals
 // Place Long Entry Order
 if (longEntry)
     strategy.entry(id="Long", direction=strategy.long, comment="Long", stop=highPrice + syminfo.mintick)
-
 // Place Short Entry Order
 if (shortEntry)
     strategy.entry("Short", strategy.short, comment="Short", stop=lowPrice - syminfo.mintick)
@@ -156,9 +157,6 @@ pnlComputed := barstate.islast ? true : (pnlComputed[1] ? pnlComputed[1] : false
 // Profit/Loss table
 var table monthlyProfitTable = table(na)
 
-// P&L% table
-var table monthlyPercentTable = table(na)
-
 if show_table
 
     // Create a table for profit/loss
@@ -185,46 +183,15 @@ if show_table
             table.cell(monthlyProfitTable, 0, yearIndex + 1, str.tostring(year(array.get(yearlyProfitCount, yearIndex))), text_color = color.white, bgcolor = TABLE_CELL_COLOR)
 
             // Create Year  P&L cells
+            string yearlyReturnValue = str.format("{0,number,integer}", math.round(number = array.get(yearlyProfit, yearIndex), precision = prec))
+            string yearlyReturnPercent = str.tostring(math.round(number = array.get(yearlyPnLs,yearIndex)*100, precision = prec)) + " %"
             yearColor = array.get(yearlyProfit, yearIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
-            table.cell(monthlyProfitTable, 13, yearIndex + 1, str.format("{0,number,integer}", math.round(number = array.get(yearlyProfit, yearIndex), precision = prec)), text_color = color.white, bgcolor = yearColor)
+            table.cell(monthlyProfitTable, 13, yearIndex + 1, yearlyReturnValue + " \n" + yearlyReturnPercent, text_color = color.white, bgcolor = yearColor)
         
         for monthIndex = 0 to array.size(monthlyProfit) - 1
+            string monthlyReturnValue = str.format("{0,number,integer}", math.round(number = array.get(monthlyProfit, monthIndex), precision = prec))
+            string monthlyReturnPercent = str.tostring(math.round(number = array.get(monthlyPnLs, monthIndex)*100, precision = prec)) + "%"
             monthRow = year(array.get(monthlyProfitCount, monthIndex)) - year(array.get(yearlyProfitCount, 0)) + 1
             monthColumn = month(array.get(monthlyProfitCount, monthIndex))
             monthColor = array.get(monthlyProfit, monthIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
-            table.cell(monthlyProfitTable, monthColumn, monthRow, str.format("{0,number,integer}", math.round(number = array.get(monthlyProfit, monthIndex), precision = prec)), text_color = color.white, bgcolor = monthColor)
-
-
-    // Create a table for profit/loss %
-    if (barstate.islast)
-        monthlyPercentTable := table.new(position = position.bottom_right, columns = 14, rows = array.size(yearlyPnLs) +1, border_width = 1)
-        table.cell(monthlyPercentTable, 0,  0, "Y|M",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 1,  0, "Jan",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 2,  0, "Feb",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 3,  0, "Mar",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 4,  0, "Apr",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 5,  0, "May",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 6,  0, "Jun",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 7,  0, "Jul",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 8,  0, "Aug",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 9,  0, "Sep",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 10, 0, "Oct",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 11, 0, "Nov",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 12, 0, "Dec",  text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-        table.cell(monthlyPercentTable, 13, 0, "Year", text_color = color.white, bgcolor = TABLE_HEADER_COLOR)
-
-        // Create a row for each year
-        for yearIndex = 0 to array.size(yearlyPnLs) - 1
-            // Create year index cell
-            table.cell(monthlyPercentTable, 0, yearIndex + 1, str.tostring(year(array.get(yearlyPnLsCount, yearIndex))), text_color = color.white, bgcolor = TABLE_CELL_COLOR)
-
-            // Create Year  P&L cells
-            yearColor = array.get(yearlyPnLs, yearIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
-            table.cell(monthlyPercentTable, 13, yearIndex + 1, str.tostring(math.round(number = array.get(yearlyPnLs,yearIndex)*100, precision = prec)) + " %", text_color = color.white, bgcolor = yearColor)
-        
-        // Create a row and col for each month
-        for monthIndex = 0 to array.size(monthlyPnLs) - 1
-            monthRow = year(array.get(monthlyPnLsCount, monthIndex)) - year(array.get(yearlyPnLsCount, 0)) + 1
-            monthColumn = month(array.get(monthlyPnLsCount, monthIndex))
-            monthColor = array.get(monthlyPnLs, monthIndex) > 0 ? TABLE_YEAR_CELL_POSITIVE_COLOR : TABLE_YEAR_CELL_NEGATIVE_COLOR
-            table.cell(monthlyPercentTable, monthColumn, monthRow, str.tostring(math.round(number = array.get(monthlyPnLs, monthIndex)*100, precision = prec)) + " %", text_color = color.white, bgcolor = monthColor)
+            table.cell(monthlyProfitTable, monthColumn, monthRow, monthlyReturnValue + "\n" + monthlyReturnPercent, text_color = color.white, bgcolor = monthColor)

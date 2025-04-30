@@ -1,0 +1,38 @@
+//@version=5
+strategy("Pyramid Strategy with EMA Cross", overlay=true, pyramiding=3) // Pyramiding set to 3
+
+// Input parameters
+fastLength = input.int(9, title="Fast EMA Length")
+slowLength = input.int(21, title="Slow EMA Length")
+risk = input.float(1, title="Risk per Trade (%)", minval=0.1, maxval=100)
+
+// Calculate EMAs
+fastEMA = ta.ema(close, fastLength)
+slowEMA = ta.ema(close, slowLength)
+
+// Plot EMAs
+plot(fastEMA, color=color.blue, title="Fast EMA")
+plot(slowEMA, color=color.red, title="Slow EMA")
+
+// Entry conditions
+longCondition = ta.crossover(fastEMA, slowEMA)
+shortCondition = ta.crossunder(fastEMA, slowEMA)
+
+// Exit conditions
+exitCondition = ta.crossunder(fastEMA, slowEMA) or ta.crossover(fastEMA, slowEMA)
+
+// Position sizing
+capital = strategy.equity
+riskAmount = capital * (risk / 100)
+
+// Long entry
+if (longCondition)
+    strategy.entry("Long", strategy.long,)
+
+// Short entry
+if (shortCondition)
+    strategy.entry("Short", strategy.short, qty=riskAmount / close)
+
+// Exit positions
+if (exitCondition)
+    strategy.close_all()

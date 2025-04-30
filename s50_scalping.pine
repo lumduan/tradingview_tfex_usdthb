@@ -1,0 +1,81 @@
+//@version=6
+strategy("Scalping for S50 (Optimized)", overlay=true, pyramiding=4, initial_capital=30000, commission_type=strategy.commission.cash_per_contract, commission_value=23, margin_long=6, margin_short=6)
+
+// === USER INPUTS ===
+int fast_len     = input.int(8, "Fast EMA")
+int mid_len      = input.int(21, "Mid EMA")
+int slow_len     = input.int(55, "Slow EMA")
+int atr_len      = input.int(14, "ATR Length")
+float atr_mult   = input.float(0.75, "Pyramiding Distance (x ATR)", step=0.1)
+float tp_mult    = input.float(2.0, "Take Profit Multiplier (x ATR)", step=0.1)
+float sl_mult    = input.float(1.0, "Stop Loss Multiplier (x ATR)", step=0.1)
+int max_orders   = input.int(5, "Max Pyramiding Orders", minval=1)
+float risk_pct   = input.float(1.0, "Risk % per Trade", minval=0.1, maxval=10)
+
+// === TREND LOGIC ===
+fast_ema = ta.ema(close, fast_len)
+mid_ema  = ta.ema(close, mid_len)
+slow_ema = ta.ema(close, slow_len)
+atr      = ta.atr(atr_len)
+
+pyramid_spacing = atr * atr_mult
+take_profit = atr * tp_mult
+stop_loss = atr * sl_mult
+
+is_bull_trend = fast_ema > mid_ema and mid_ema > slow_ema and (fast_ema - slow_ema) > (atr * 0.5)
+is_bear_trend = fast_ema < mid_ema and mid_ema < slow_ema and (slow_ema - fast_ema) > (atr * 0.5)
+
+// === ADDITIONAL FILTERS ===
+rsi = ta.rsi(close, 14)
+macd_line, signal_line, _ = ta.macd(close, 12, 26, 9)
+is_rsi_bullish = rsi > 50
+is_rsi_bearish = rsi < 50
+is_macd_bullish = macd_line > signal_line
+is_macd_bearish = macd_line < signal_line
+
+// === TIME FILTER ===
+bool is_trading_time = (hour >= 9 and hour <= 15 and minute < 45)
+
+// === STATE TRACKING ===
+var float last_entry_price_long = na
+var float last_entry_price_short = na
+
+// === POSITION SIZING ===
+equity = strategy.equity
+risk_amount = equity * (risk_pct / 100)
+position_size = risk_amount / atr
+
+// === LONG ENTRY CONDITION ===
+bool can_long = is_bull_trend and is_rsi_bullish and is_macd_bullish and is_trading_time and (na(last_entry_price_long) or close >= last_entry_price_long + pyramid_spacing)
+
+// === SHORT ENTRY CONDITION ===
+bool can_short = is_bear_trend and is_rsi_bearish and is_macd_bearish and is_trading_time and (na(last_entry_price_short) or close <= last_entry_price_short - pyramid_spacing)
+
+// === LONG ENTRY ===
+if can_long and strategy.opentrades < max_orders
+    strategy.entry(id = 'long', direction = strategy.long, qty=position_size, comment = 'long')
+    last_entry_price_long := close
+
+// === SHORT ENTRY ===
+if can_short and strategy.opentrades < max_orders
+    strategy.entry(id = 'short', direction = strategy.short, qty=position_size, comment = 'short')
+    last_entry_price_short := close
+
+// === EXIT: Take Profit and Stop Loss ===
+strategy.exit(id = "long_tp_sl", from_entry = "long", profit = take_profit, loss = stop_loss, comment = "long exit")
+strategy.exit(id = "short_tp_sl", from_entry = "short", profit = take_profit, loss = stop_loss, comment = "short exit")
+
+// === TRAILING STOP ===
+if strategy.position_size > 0
+    strategy.exit("Trail Long", stop=strategy.position_avg_price + atr * 0.5)
+if strategy.position_size < 0
+    strategy.exit("Trail Short", stop=strategy.position_avg_price - atr * 0.5)
+
+// === END OF DAY CLOSE ===
+if hour == 16 and minute >= 30
+    strategy.close_all(comment = "EOD Close")
+
+// === PLOT EMAs FOR VISUALIZATION ===
+plot(fast_ema, color=color.blue, title="Fast EMA")
+plot(mid_ema,  color=color.orange, title="Mid EMA")
+plot(slow_ema, color=color.red, title="Slow EMA")

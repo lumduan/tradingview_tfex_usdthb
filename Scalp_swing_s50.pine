@@ -1,0 +1,51 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © MarketTipsy
+
+//@version=6
+strategy("ScalpSwing Pro for SET50", overlay=true)
+
+// === EMA Settings ===
+ema20 = ta.ema(close, 20)
+ema50 = ta.ema(close, 50)
+ema200 = ta.ema(close, 200)
+
+plot(ema20, title="EMA 20", color=color.blue, linewidth=1)
+plot(ema50, title="EMA 50", color=color.orange, linewidth=1)
+plot(ema200, title="EMA 200", color=color.red, linewidth=2)
+
+// === VWAP ===
+vwap = ta.vwap
+plot(vwap, title="VWAP", color=color.green, linewidth=1)
+
+// === RSI Settings ===
+rsi = ta.rsi(close, 14)
+rsiOverbought = 70
+rsiOversold = 30
+
+rsiColor = rsi > rsiOverbought ? color.red : rsi < rsiOversold ? color.green : color.gray
+hline(70, "Overbought", color=color.red)
+hline(30, "Oversold", color=color.green)
+hline(50, "Midline", color=color.gray)
+
+// === MACD Settings ===
+[macdLine, signalLine, hist] = ta.macd(close, 12, 26, 9)
+macdCrossUp = ta.crossover(macdLine, signalLine)
+macdCrossDown = ta.crossunder(macdLine, signalLine)
+
+plotshape(macdCrossUp, title="MACD Bullish Crossover", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small)
+plotshape(macdCrossDown, title="MACD Bearish Crossover", location=location.abovebar, color=color.red, style=shape.triangledown, size=size.small)
+
+// === Entry Signals (EMA + RSI confluence) ===
+buySignal = ta.crossover(ema20, ema50) and rsi < 70 and rsi > 50
+sellSignal = ta.crossunder(ema20, ema50) and rsi > 30 and rsi < 50
+
+// Plot buy and sell signals
+plotshape(buySignal, title="Buy Signal", location=location.belowbar, color=color.lime, style=shape.labelup, size=size.small, text="BUY")
+plotshape(sellSignal, title="Sell Signal", location=location.abovebar, color=color.red, style=shape.labeldown, size=size.small, text="SELL")
+
+// === Strategy Orders ===
+if (buySignal)
+    strategy.entry("Buy", strategy.long)
+
+if (sellSignal)
+    strategy.entry("Sell", strategy.short)

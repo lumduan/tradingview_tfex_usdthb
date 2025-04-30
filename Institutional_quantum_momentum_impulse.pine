@@ -1,0 +1,95 @@
+//@version=6
+strategy("Institutional Quantum Momentum Impulse [BullByte] Strategy", shorttitle="IQMI Strategy", overlay=false, precision=3, max_lines_count=500, scale=scale.right)
+
+// ———— INPUTS ————
+// Core Parameters
+resonance      = input.float(2.618, "Resonance Factor", minval=1.0, maxval=3.618, step=0.1)
+entropyStr     = input.string("0.382", "Entropy Filter", options=["0.382", "0.50", "0.618"])
+smoothType     = input.string("WMA", "Smoothing Type", options=["EMA", "WMA", "HMA"])
+normPeriod     = input.int(20, "Normalization Period", minval=10)
+
+// Smoothing Parameter for QM
+qmSmoothPeriod = input.int(5, "QM Smoothing Period", minval=1)
+
+// Advanced Features
+enableOrderFlow = input.bool(true, "Enable Institutional Order Flow")
+enablePatternRec = input.bool(true, "Enable Pattern Recognition")
+
+// ———— CORE CALCULATIONS ————
+// Convert entropy string to float
+entropy = entropyStr == "0.382" ? 0.382 : entropyStr == "0.50" ? 0.50 : 0.618
+
+// Institutional Volatility Engine
+fractalVolatility() =>
+    tr       = ta.tr
+    keltner  = ta.ema(tr, 14) / (ta.ema(close, 14) + 0.0001)
+    var float garchVol = 0.0
+    garchVol := 0.2 * ta.stdev(close, 5) + 0.8 * nz(garchVol[1])
+    priceEntropy = math.abs(math.log(ta.sma(close, 5) / ta.sma(close, 20)))
+    (keltner + garchVol + priceEntropy) / 3
+
+volScore = fractalVolatility() * 100
+volTrend = volScore > ta.sma(volScore, 20)
+
+// Quantum Momentum Core
+momentumEngine(len, res) =>
+    hilbert   = 0.0962 * close + 0.5769 * nz(close[2]) - 0.5769 * nz(close[4]) - 0.0962 * nz(close[6])
+    mmtfMom   = smoothType == "EMA" ? ta.ema(hilbert, len) : smoothType == "WMA" ? ta.wma(hilbert, len) : ta.hma(hilbert, len)
+    momROC    = ta.roc(mmtfMom, len)
+    [macdLine, _, _] = ta.macd(close, 12, 26, 9)
+    [macdLong, _, _] = ta.macd(close, 26, 52, 9)
+    macdDiv  = (macdLine - macdLong) * res
+    stochVal = ta.stoch(close, high, low, len)
+    stochEnergy = stochVal - 50
+    composite = (momROC * 0.618) + (macdDiv * 1.618) - (stochEnergy * entropy)
+    composite * volScore / 100
+
+rawQM = momentumEngine(14, resonance)
+
+// Normalization (Z-Score)
+meanQM  = ta.sma(rawQM, normPeriod)
+stdevQM = ta.stdev(rawQM, normPeriod)
+qm_norm = (rawQM - meanQM) / (stdevQM == 0 ? 1 : stdevQM)
+
+// Additional smoothing on QM
+smoothedQM = ta.ema(qm_norm, qmSmoothPeriod)
+
+// Efficiency Ratio
+efficiency = math.abs(qm_norm - qm_norm[10]) / (math.sum(math.abs(qm_norm - qm_norm[1]), 10) + 0.00001)
+
+// Adaptive Thresholds
+dynamicThreshold() =>
+    ta.ema(ta.stdev(qm_norm, 20) * (1 + efficiency), 5)
+
+upperBand = dynamicThreshold()
+lowerBand = -upperBand
+
+// Signal Confirmation
+signalConfirmation() =>
+    bullishDiv = ta.lowest(smoothedQM, 5) > ta.lowest(smoothedQM, 5)[1] and ta.lowest(close, 5) < ta.lowest(close, 5)[1]
+    bearishDiv = ta.highest(smoothedQM, 5) < ta.highest(smoothedQM, 5)[1] and ta.highest(close, 5) > ta.highest(close, 5)[1]
+    volConfirmation = volume > ta.sma(volume, 20) * 1.5
+    [_, _, adx] = ta.dmi(14, 14)
+    trendStrength = adx > 25
+    divergenceScore = bullishDiv ? 1 : bearishDiv ? -1 : 0
+    volumeScore = volConfirmation ? 1 : 0
+    trendScore = trendStrength ? 1 : 0
+    divergenceScore + volumeScore + trendScore
+
+signalStrength = signalConfirmation()
+
+// ———— STRATEGY LOGIC ————
+longCondition = signalStrength >= 2
+shortCondition = signalStrength <= -2
+
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short)
+
+// ———— PLOTTING ————
+plot(smoothedQM, "Quantum Momentum", color=color.blue, linewidth=2)
+plot(upperBand, "Upper Band", color=color.green, linewidth=1)
+plot(lowerBand, "Lower Band", color=color.red, linewidth=1)
+plot(0, "Zero Line", color=color.gray, linewidth=1)
